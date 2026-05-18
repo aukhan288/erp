@@ -12,7 +12,17 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'avatar'])]
+#[Fillable([
+    'firstname',
+    'lastname',
+    'email',
+    'password',
+    'avatar',
+    'mobile',
+    'cnic',
+    'working_days',
+    'address_line'
+])]
 #[Hidden(['password', 'remember_token'])]
  
 class User extends Authenticatable
@@ -32,6 +42,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    protected $casts = [
+    'working_days' => 'array',
+   ];
 
   public function getAvatarUrlAttribute()
 {
@@ -41,14 +54,27 @@ class User extends Authenticatable
     }
 
     // Otherwise, generate a dynamic avatar using ui-avatars.com
-    $name = urlencode($this->name ?? 'User'); // fallback name if null
+    $name = urlencode($this->firstname . " " . $this->lastname ?? 'User'); // fallback name if null
     return "https://ui-avatars.com/api/?name={$name}&background=random";
 }
 
-   public function roles()
+   public function companies()
     {
-        return $this->belongsToMany(Role::class, 'role_user');
+        return $this->belongsToMany(Company::class);
     }
+    public function activeCompany()
+{
+    return $this->belongsTo(Company::class, 'active_company_id');
+}
+public function roles()
+{
+    return $this->belongsToMany(
+        Role::class,
+        'company_user_roles',
+        'user_id',
+        'role_id'
+    )->withPivot('company_id');
+}
 
     public function permissions()
     {

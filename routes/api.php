@@ -9,6 +9,8 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SprintController;
+use App\Http\Controllers\FileController;
+use App\Http\Controllers\CompanyController;
 
 Route::post('/register', [AuthController::class,'register']);
 Route::post('/login', [AuthController::class,'login']);
@@ -19,11 +21,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/create-user', [UserController::class,'createUser'])->name('create-user');
     Route::get('/users', [UserController::class,'users'])->name('users');
-    Route::get('/profile/{id}', [UserController::class, 'show']);
+    Route::post('/upload-avatar', [UserController::class, 'uploadAvatar'])->middleware('auth:sanctum');
+    
+    Route::post('/companies/switch', [CompanyController::class, 'switch']);
+    Route::get('/company-documents', [CompanyController::class, 'documents']);
+    Route::post('/company-documents', [CompanyController::class, 'storeDocument']);
+    Route::put('/company-documents/{id}', [CompanyController::class, 'updateDocument']);
+    Route::delete('/company-documents/{id}', [CompanyController::class, 'deleteDocument']);
+
+    
+    Route::get('/profile/{id?}', [AuthController::class, 'user']);
     Route::post('/toggle-permission', [UserController::class, 'togglePermission']);
     Route::post('/create-project', [ProjectController::class,'createProject'])->name('create-project');
     Route::get('/projects', [ProjectController::class,'projects'])->name('projects');
     Route::get('/project/{id}', [ProjectController::class, 'show']);
+    Route::get('/download-artifacts/{project}', [ProjectController::class, 'downloadArtifacts']);
+    Route::post('/upload-artifacts/{project}', [ProjectController::class, 'uploadArtifacts']);
     Route::delete('/delete-project/{project}', [ProjectController::class, 'destroy'])->name('delete-project');
 
     Route::get('/milestones/{projectId?}', [MilestoneController::class, 'index']);
@@ -40,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/task-completed/{task}', [TaskController::class, 'markAsCompleted'])->name('task-completed');
     Route::get('/tasks/status-count/{project?}', [TaskController::class, 'statusCounts']);
     Route::get('/backlog/{projectId?}', [TaskController::class, 'backlog']);
+    Route::get('/sprint-backlogs/{sprint?}', [TaskController::class, 'sprintBacklog']);
 
     Route::get('/task-statuses', [TaskController::class, 'taskStatuses']);
     Route::get('/todos/{userId}', [TaskController::class, 'todos']);
@@ -51,10 +65,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/create-sprint/{projectId}', [SprintController::class, 'store']);
     Route::put('/sprints/{id}', [SprintController::class, 'update']);
     Route::delete('/sprints/{id}', [SprintController::class, 'destroy']);
+    Route::post('/upload-file', [FileController::class, 'upload']);
+
+    Route::get('/sprints/{id}/users', [SprintController::class, 'getSprintUsers']);
+    Route::post('/toggle-sprint-user/{sprintId}', [SprintController::class, 'toggleSprintUser']);
     
 });
 
-
+    Route::delete('/delete-file/{id}', [FileController::class, 'deleteFile']);
 Route::middleware(['auth:sanctum','role:admin|manager'])->group(function(){
     Route::get('/dashboard', [DashboardController::class,'index']);
 });

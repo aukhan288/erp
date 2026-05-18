@@ -12,6 +12,7 @@ import { TrashBinIcon, PencilIcon } from '../../icons';
 import moment from 'moment';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
+import TableLoader from '../common/TableLoader';
 
 
 export default function SprintsTable( { refreshKey, setRefreshKey } ) {
@@ -157,8 +158,8 @@ useEffect(() => {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      {loading && <p className="p-4 text-gray-500">Loading tasks...</p>}
-
+      {loading? <TableLoader />
+        : <>
       <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -210,6 +211,7 @@ useEffect(() => {
         pageSize={pageSize}
         onPageChange={(page) => setPageIndex(page - 1)}
       />
+      </>}
     </div>
   );
 }

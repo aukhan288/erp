@@ -1,6 +1,7 @@
 import { ReactComponent as PlusIcon } from "./plus.svg?react";
 import { ReactComponent as CloseIcon } from "./close.svg?react";
 import { ReactComponent as BoxIcon } from "./box.svg?react";
+import { ReactComponent as LoginIcon } from "./login.svg?react";
 import { ReactComponent as CheckCircleIcon } from "./check-circle.svg?react";
 import { ReactComponent as AlertIcon } from "./alert.svg?react";
 import { ReactComponent as InfoIcon } from "./info.svg?react";
@@ -68,6 +69,7 @@ export {
   BoltIcon,
   PlusIcon,
   BoxIcon,
+  LoginIcon,
   CloseIcon,
   CheckCircleIcon,
   AlertIcon,

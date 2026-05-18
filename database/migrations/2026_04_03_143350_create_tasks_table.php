@@ -17,7 +17,9 @@ return new class extends Migration
             $table->foreignId('milestone_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('sprint_id')->nullable()->constrained()->nullOnDelete();
             $table->string('title');
+            $table->integer('estimated_time')->nullable();
             $table->text('description')->nullable();
+            $table->text('acceptance_criteria')->nullable();
             $table->foreignId('status_id')->constrained('task_statuses')->default(1);
             $table->enum('priority', ['low','medium','high'])->default('medium');
             $table->foreignId('assignee_id')->nullable()->constrained('users')->nullOnDelete();

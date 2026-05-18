@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
 import { TrashBinIcon, PencilIcon } from '../icons';
 import Swal from 'sweetalert2';
@@ -6,8 +6,15 @@ import moment from 'moment';
 import { useSelector } from 'react-redux';
 import Badge from './ui/badge/Badge';
 
+
+
 export default function Milestones({ projectId, onMilestoneAdded  }) {
+  const loaderRef = useRef(null);
+  const observerRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [milestones, setMilestones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,30 +31,76 @@ export default function Milestones({ projectId, onMilestoneAdded  }) {
   });
 
   // Fetch milestones
-const fetchMilestones = async () => {
+const fetchMilestones = async (pageNum = 1) => {
+  if (loadingMore && pageNum !== 1) return;
+  if (!hasMore && pageNum !== 1) return;
+
   setLoading(true);
+
   try {
+    const res = await api.get(
+      `/milestones/${projectId}?page=${pageNum}`
+    );
 
-    const res = await api.get( projectId ? `/milestones/${projectId}` : `/milestones`);
+    const newData = res.data.data || [];
 
-    // Ensure milestones is always an array
-    const milestonesArray = Array.isArray(res.data.data)
-      ? res.data.data
-      : Array.isArray(res.data)
-      ? res.data
-      : [];
+setMilestones((prev) =>
+  pageNum === 1 ? newData : [...prev, ...newData]
+);
 
-    setMilestones(milestonesArray);
+setHasMore(pageNum < res.data.last_page);
+    setPage(pageNum);
   } catch (err) {
-    console.error('Failed to fetch milestones', err);
+    console.error(err);
   } finally {
     setLoading(false);
+    setLoadingMore(false);
   }
 };
 
-  useEffect(() => {
-    fetchMilestones();
-  }, [projectId]);
+useEffect(() => {
+  if (!projectId) return;
+
+  setMilestones([]);
+  setPage(1);
+  setHasMore(true);
+
+  fetchMilestones(1);
+}, [projectId]);
+
+useEffect(() => {
+  if (!hasMore) return;
+
+  // clean previous observer
+  if (observerRef.current) {
+    observerRef.current.disconnect();
+  }
+
+  observerRef.current = new IntersectionObserver(
+    (entries) => {
+      const target = entries[0];
+
+      if (target.isIntersecting && !loadingMore) {
+        setLoadingMore(true);
+        fetchMilestones(page + 1);
+      }
+    },
+    {
+      root: null,
+      rootMargin: "150px",
+      threshold: 0.1,
+    }
+  );
+
+  const el = loaderRef.current;
+  if (el) observerRef.current.observe(el);
+
+  return () => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+  };
+}, [hasMore, loadingMore, page]);
 
   // Handle form input change
   const handleChange = (e) => {
@@ -182,21 +235,23 @@ const handleDelete = async (id) => {
 };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden p-4">
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-700">Milestones</h3>
+        <h3 className="text-xl font-semibold text-teal-700">Milestones</h3>
+        {user?.roles?.some(role => role.name === "admin") && (
         <button
           className="bg-teal-700 text-white px-3 py-1 rounded hover:bg-teal-800"
           onClick={() => openModal()}
         >
           +
         </button>
+        )}
       </div>
 
       {loading ? (
         <p className="text-gray-500">Loading milestones...</p>
       ) : (
-        <ul className="space-y-1">
+  <ul className="space-y-1 max-h-[400px] overflow-y-auto">
           {milestones.length > 0 ? (
   milestones.map((m) => (
     <li
@@ -223,6 +278,7 @@ const handleDelete = async (id) => {
         </div>
 
         {/* Actions */}
+        {user?.roles?.some(role => role.name === "admin") && (
         <div className="flex gap-2">
           <button
             className="text-blue-600 hover:underline"
@@ -243,11 +299,12 @@ const handleDelete = async (id) => {
             <TrashBinIcon />
           </button>
         </div>
+        )}
       </div>
 
       {/* Milestone Description */}
       {m.description && (
-        <div className="text-sm text-gray-600 dark:text-gray-300 ml-5">
+        <div className="text-sm text-gray-600 ml-5">
           {m.description}
         </div>
       )}
@@ -262,8 +319,8 @@ const handleDelete = async (id) => {
           {m.tasks.map((task) => (
             <div
               key={task.id}
-             className={`py-1 px-1 border border-gray-300 dark:border-gray-600 rounded mb-1 bg-gray-50 dark:bg-gray-800 
-  hover:bg-gray-100 dark:hover:bg-gray-700 
+             className={`py-1 px-1 border border-gray-300 rounded mb-1 bg-gray-50  
+  hover:bg-gray-100 
   hover:border-teal-700 transition-colors duration-200`}
             >
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -332,20 +389,27 @@ const handleDelete = async (id) => {
   <li className="text-gray-500">No milestones yet.</li>
 )}
         </ul>
+        
       )}
 
+
+<div ref={loaderRef} className="h-10 flex justify-center items-center">
+  {loadingMore && (
+    <p className="text-gray-500 text-sm">Loading more...</p>
+  )}
+</div>
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+  <div className="bg-white rounded-lg p-6 w-full max-w-md">
     <h4 className="text-lg font-semibold mb-4">
       {editingMilestone ? 'Edit Milestone' : 'Add Milestone'}
     </h4>
-    <form onSubmit={handleSubmit} className="space-y-3">
+     <form onSubmit={handleSubmit} className="space-y-3 max-h-[500px] overflow-y-auto">
       
       {/* Milestone Name */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="name">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="name">
           Milestone Name
         </label>
         <input
@@ -361,7 +425,7 @@ const handleDelete = async (id) => {
 
       {/* Description */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="description">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="description">
           Description (optional)
         </label>
         <textarea
@@ -375,7 +439,7 @@ const handleDelete = async (id) => {
 
       {/* Due Date */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="due_date">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="due_date">
           Due Date
         </label>
         <input
@@ -390,7 +454,7 @@ const handleDelete = async (id) => {
 
       {/* Status */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="status">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="status">
           Status
         </label>
         <select

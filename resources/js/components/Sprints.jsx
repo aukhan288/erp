@@ -122,7 +122,7 @@ useEffect(() => {
 
       fetchSprints();
       setModalOpen(false);
-      set
+ 
       Swal.fire({
         icon: 'success',
         title: editingSprint ? 'Sprint Updated' : 'Sprint Created',
@@ -160,9 +160,11 @@ useEffect(() => {
     <div className="rounded-lg border border-gray-200 bg-white dark:bg-white/[0.03] p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-700">Sprints</h3>
+        {user?.roles?.some(role => role.name === "admin") && (
         <button className="bg-teal-700 text-white px-3 py-1 rounded hover:bg-teal-800" onClick={() => openModal()}>
           +
         </button>
+        )}
       </div>
 
       {loading ? (
@@ -187,6 +189,7 @@ useEffect(() => {
         </div>
 
         {/* Actions */}
+        {user?.roles?.some(role => role.name === "admin") && (
         <div className="flex gap-2">
           <button className="text-blue-600 hover:underline" onClick={() => openModal(s)}>
             <PencilIcon />
@@ -195,6 +198,7 @@ useEffect(() => {
             <TrashBinIcon />
           </button>
         </div>
+        )}
       </div>
 
       {/* Expandable Tasks */}
@@ -203,7 +207,7 @@ useEffect(() => {
           {s.tasks.map((task) => (
             <div
               key={task.id}
-              className="py-1 px-1 border border-gray-300 dark:border-gray-600 rounded mb-1 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-teal-700 transition-colors duration-200"
+              className="py-1 px-1 border border-gray-300 rounded mb-1 bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-100 hover:border-teal-700 transition-colors duration-200"
             >
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-medium">
@@ -276,12 +280,12 @@ useEffect(() => {
 
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h4 className="text-lg font-semibold mb-4">{editingSprint ? 'Edit Sprint' : 'Add Sprint'}</h4>
-            <form onSubmit={handleSubmit} className="space-y-3">
+             <form onSubmit={handleSubmit} className="space-y-3 max-h-[500px] overflow-y-auto">
                 {!initialProjectId && (
   <div>
-    <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Project</label>
+    <label className="block mb-1 font-medium text-gray-700">Project</label>
     <select
       name="project_id"
       value={projectId}
@@ -300,25 +304,25 @@ useEffect(() => {
   </div>
 )}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Sprint Name</label>
+                <label className="block mb-1 font-medium text-gray-700">Sprint Name</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required
                   className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" />
               </div>
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Goal</label>
+                <label className="block mb-1 font-medium text-gray-700">Goal</label>
                 <textarea name="goal" value={formData.goal} onChange={handleChange} 
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" />
+                  className="w-full h-50 border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" />
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Start Date</label>
+                  <label className="block mb-1 font-medium text-gray-700">Start Date</label>
                   <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} 
-                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" required />
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"  />
                 </div>
                 <div className="flex-1">
-                  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">End Date</label>
+                  <label className="block mb-1 font-medium text-gray-700">End Date</label>
                   <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} 
-                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" required />
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"  />
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
@@ -332,7 +336,7 @@ useEffect(() => {
 
          {assigneeModalOpen && selectedTask && (
   <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm">
       <h4 className="text-lg font-semibold mb-4">Assign Task</h4>
 
       <select

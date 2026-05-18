@@ -49,7 +49,7 @@ export const fetchUser = createAsyncThunk(
       const res = await api.get('/user');
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Unauthorized');
+      return rejectWithValue(err.response?.data?.message);
     }
   }
 );

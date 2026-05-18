@@ -5,7 +5,7 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useSelector } from "react-redux";
 
-export default function UserInfoCard( { user }) {
+export default function UserInfoCard( { profile, companies }) {
   // const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
@@ -26,7 +26,7 @@ export default function UserInfoCard( { user }) {
                 First Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.name || "N/A"}
+                {profile?.firstname || "N/A"}
               </p>
             </div>
 
@@ -35,7 +35,7 @@ export default function UserInfoCard( { user }) {
                 Last Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Chowdhury
+                {profile?.lastname || "N/A"}
               </p>
             </div>
 
@@ -44,7 +44,7 @@ export default function UserInfoCard( { user }) {
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.email || "N/A"}
+                {profile?.email || "N/A"}
               </p>
             </div>
 
@@ -53,17 +53,36 @@ export default function UserInfoCard( { user }) {
                 Phone
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.mobile || "N/A"}
+                {profile?.mobile || "N/A"}
               </p>
             </div>
 
             <div>
+                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Companies
+              </p>
+             <ul>
+  {profile?.companies && profile?.companies.length > 0 &&
+    profile?.companies.map((company) => (
+      <li key={company.id}>
+        <label>
+          <input  type="checkbox"  className="accent-teal-600 scale-100 mr-2" value={company.id}  checked={company?.selected}   disabled={profile?.roles?.some(role => role.name === "admin")}/>
+          {company.name}
+        </label>
+      </li>
+    ))}
+</ul>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Bio
               </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Team Manager
-              </p>
+{profile?.working_days && (
+  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+    {Object.keys(profile.working_days)
+      .filter(day => profile.working_days[day] > 0)
+      .map(day => day.charAt(0).toUpperCase() + day.slice(1) + ` (${profile.working_days[day]}h)`)
+      .join(", ")}
+  </p>
+)}
             </div>
           </div>
         </div>

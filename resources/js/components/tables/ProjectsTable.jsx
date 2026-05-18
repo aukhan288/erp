@@ -11,6 +11,7 @@ import Pagination from '../common/Pagination'; // reusable pagination
 import { Link } from 'react-router-dom';
 import { TrashBinIcon, PencilIcon } from '../../icons';
 import Swal from 'sweetalert2';
+import TableLoader from '../common/TableLoader';
 
 export default function ProjectsTable({ refreshKey, setRefreshKey }) {
   const [data, setData] = useState([]);
@@ -127,20 +128,22 @@ export default function ProjectsTable({ refreshKey, setRefreshKey }) {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     manualPagination: true, // important for server-side pagination
+    autoResetPageIndex: false,
   });
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
-      {loading && <p className="p-4 text-gray-500">Loading projects...</p>}
-
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+      {loading? <TableLoader />
+        :
+      <>
       <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
-        <thead className="bg-gray-100 dark:bg-gray-800">
+        <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200"
+                  className="px-4 py-2 text-left text-sm font-medium text-gray-700"
                 >
                   {typeof header.column.columnDef.header === 'function'
                     ? header.column.columnDef.header(header.getContext())
@@ -150,13 +153,13 @@ export default function ProjectsTable({ refreshKey, setRefreshKey }) {
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-gray-200">
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={row.id} className="hover:bg-gray-50">
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300"
+                  className="px-4 py-2 text-sm text-gray-600"
                 >
                   {cell.column.columnDef.cell
                     ? cell.column.columnDef.cell(cell.getContext())
@@ -176,6 +179,7 @@ export default function ProjectsTable({ refreshKey, setRefreshKey }) {
         pageSize={pageSize}
         onPageChange={(page) => setPageIndex(page - 1)}
       />
+      </>}
     </div>
   );
 }

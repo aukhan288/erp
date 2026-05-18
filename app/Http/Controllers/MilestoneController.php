@@ -8,20 +8,24 @@ use App\Models\Milestone;
 class MilestoneController extends Controller
 {
     // GET /milestones/{projectId?}
-    public function index($projectId = null)
-    {
-        $query = Milestone::query();
+   public function index($projectId = null)
+{
+    $companyId = auth()->user()->active_company_id;
 
-        // Filter by project if provided
-        $projectId? $query->where('project_id', $projectId)->with(['tasks.assignee']) : $query->with(['project', 'tasks.assignee']);
-        
+    $query = Milestone::query()
+        ->whereHas('project', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        });
 
-        $milestones = $query->latest()->get();
+    // Filter by project if provided
+    $projectId
+        ? $query->where('project_id', $projectId)->with(['tasks.assignee'])
+        : $query->with(['project', 'tasks.assignee']);
 
-        return response()->json([
-            'data' => $milestones
-        ]);
-    }
+$milestones = $query->latest()->paginate(10);
+
+    return response()->json($milestones);
+}
 
     // POST /create-milestone/{projectId}
     public function createMilestone(Request $request, $projectId)

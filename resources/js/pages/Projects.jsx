@@ -111,7 +111,7 @@ useEffect(() => {
 
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg w-[420px] p-6 relative">
+            <div className="bg-white rounded-lg w-[420px] p-6 relative">
 
               <h3 className="text-lg font-semibold mb-4">
                 Create Project

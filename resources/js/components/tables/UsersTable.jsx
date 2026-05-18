@@ -10,8 +10,13 @@ import api from '../../services/api';
 import Pagination from '../common/Pagination'; // import reusable pagination
 import TableLoader from '../common/TableLoader'; // import loader component
 import { Link } from 'react-router-dom';
+import moment from "moment";
+import { useSelector } from "react-redux";
 
-export default function UsersTable() {
+export default function UsersTable({usersTableRefreshKey, setUsersTableRefreshKey}) {
+  const { user } = useSelector((state) => state.auth);
+
+  
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
@@ -36,20 +41,25 @@ export default function UsersTable() {
             <div className="flex-shrink-0 overflow-hidden rounded-full h-8 w-8">
               <img
                 src={row?.avatar_url}
-                alt={row?.name || "User"}
+                alt={row?.firstname + " " + row?.lastname || "User"}
                 className="h-full w-full object-cover"
               />
             </div>
 
-            <Link to={`/profile/${row.id}`} className="text-sm font-medium text-gray-800 dark:text-white/90 hover:underline">
-              <strong>{info.getValue()}</strong> <br />
-              {
-                row?.roles?.length > 0 && row.roles.map((role) => (
-                  <span className="ml-2 inline-flex items-center rounded-full bg-teal-100 px-1 text-xs font-medium text-teal-800 font-size-6" key={role.id}>
-                    {role.name}
-                  </span>
-                ))
-              }
+            <Link to={`/profile/${row.id}`} className="text-sm font-medium text-gray-800 hover:underline">
+              <strong>{row?.firstname + " " + row?.lastname}</strong> <br />
+{
+  row?.roles
+    ?.filter(role => role?.pivot?.company_id === user?.active_company_id)
+    ?.map(role => (
+      <span
+        key={role.id}
+        className="ml-1 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800"
+      >
+        {role.name}
+      </span>
+    ))
+}
             </Link>
           </div>
         );
@@ -58,7 +68,12 @@ export default function UsersTable() {
 
     columnHelper.accessor("email", { header: "Email" }),
     columnHelper.accessor("mobile", { header: "Mobile" }),
-    columnHelper.accessor("created_at", { header: "Created At" }),
+    columnHelper.accessor("created_at", { header: "Created At",
+       cell: (info) =>
+          info.getValue()
+            ? moment(info.getValue()).format("Do MMMM YYYY")
+            : "No date",
+     }),
   ],
   []
 );
@@ -81,7 +96,7 @@ export default function UsersTable() {
 
   useEffect(() => {
     fetchData();
-  }, [pageIndex, pageSize]);
+  }, [pageIndex, pageSize, usersTableRefreshKey]);
 
   const table = useReactTable({
     data,
@@ -101,17 +116,18 @@ export default function UsersTable() {
   });
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
-      {loading && <TableLoader rows={5} columns={4} /> }
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+      {loading? <TableLoader /> 
+        : <>
 
       <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
-        <thead className="bg-gray-100 dark:bg-gray-800">
+        <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200"
+                  className="px-4 py-2 text-left text-sm font-medium text-gray-700"
                 >
                   {typeof header.column.columnDef.header === 'function'
                     ? header.column.columnDef.header(header.getContext())
@@ -121,13 +137,13 @@ export default function UsersTable() {
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-200">
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={row.id} className="hover:bg-gray-50">
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300"
+                  className="px-4 py-2 text-sm text-gray-600"
                 >
                   {cell.column.columnDef.cell
                     ? cell.column.columnDef.cell(cell.getContext())
@@ -148,7 +164,7 @@ export default function UsersTable() {
             pageSize={pageSize}
             onPageChange={(page) => setPageIndex(page - 1)}
         />
-   
+    </>}
     </div>
   );
 }

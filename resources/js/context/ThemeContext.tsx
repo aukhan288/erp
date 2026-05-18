@@ -31,15 +31,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isInitialized) {
       localStorage.setItem("theme", theme);
       if (theme === "dark") {
-        document.documentElement.classList.add("dark");
+        document.documentElement.classList.add("light");
       } else {
-        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.remove("light");
       }
     }
   }, [theme, isInitialized]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    setTheme((prevTheme) => (prevTheme === "light" ? "light" : "light"));
   };
 
   return (

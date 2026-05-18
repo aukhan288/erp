@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
 import { useNavigate } from 'react-router';
-import { EyeCloseIcon, EyeIcon } from '../../icons';
+import { EyeCloseIcon, EyeIcon, LoginIcon } from '../../icons';
 import Label from '../form/Label';
 import Input from '../form/input/InputField';
 import Checkbox from '../form/input/Checkbox';
@@ -27,19 +27,22 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 bg-gray-100">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-        <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+        <div className="w-[360px] max-w-md mx-auto bg-white p-8 rounded-lg shadow-md border border-gray-200">
+       <div className="w-full flex justify-center items-center mb-10">
+  <img src="/images/logo/logo.png" className="w-[180px] h-auto" alt="Logo" />
+</div>
           {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email<span className="text-rose-800" >*</span></Label>
               <Input id="email" placeholder="info@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             <div>
-              <Label htmlFor="password">Password *</Label>
+              <Label htmlFor="password">Password<span className="text-rose-800" >*</span></Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -72,9 +75,10 @@ export default function SignInForm() {
                 type="button"
                 onClick={handleLogin}
                 disabled={loading}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? 'Signing in...' : 'Sign in'}
+                <LoginIcon />
               </button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import { Link } from "react-router";
 
+
 // Define the interface for the props
 interface HeaderProps {
   onClick?: () => void; // Optional function that takes no arguments and returns void
@@ -154,6 +155,7 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
             {/* <!-- Dark Mode Toggler --> */}
       
             {/* <!-- Dark Mode Toggler --> */}
+            
             <NotificationDropdown />
             {/* <!-- Notification Menu Area --> */}
           </div>

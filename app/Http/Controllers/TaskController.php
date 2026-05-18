@@ -9,71 +9,97 @@ use App\Models\TaskStatus;
 class TaskController extends Controller
 {
     // List all tasks
-    public function index($projectId = null)
-    {
-        // Start query with relationships
-        $query = Task::with(['project', 'milestone', 'assignee', 'status', 'sprint']);
+   public function index($projectId = null)
+{
+    $companyId = auth()->user()->active_company_id;
 
-        // Filter by project if provided
-        if ($projectId) {
-            $query->where('project_id', $projectId);
-        }
+$query = Task::with(['project', 'milestone', 'assignee', 'status', 'sprint', 'files'])
+    ->whereNotNull('sprint_id')
+    ->whereNotNull('assignee_id')
+    ->whereHas('project', function ($q) use ($companyId) {
+        $q->where('company_id', $companyId);
+    })
+    ->when(!auth()->user()->roles->contains('slug', 'admin'), function ($q) {
+        $q->where('assignee_id', auth()->id());
+    });
 
-        // Execute query
-        $tasks = $projectId ? $query->get() : $query->orderBy('created_at', 'desc')->paginate(10);
-
-        return response()->json($tasks);
+    if ($projectId) {
+        $query->where('project_id', $projectId);
     }
 
+    $tasks = $query
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+    return response()->json($tasks);
+}
     // Show single task
     public function show(Task $task)
     {
-        $task->load(['project', 'milestone', 'assignee', 'status']);
+        $task->load(['project', 'milestone', 'assignee', 'status','files']);
         return response()->json($task);
     }
 
     // Create task
-    public function create(Request $request)
-    {
-       $request->merge([
+   public function create(Request $request)
+{
+    $request->merge([
         'status_id' => $request->status_id ?? TaskStatus::where('name', 'backlog')->value('id')
     ]);
+
+    $validated = $request->validate([
+        'project_id' => 'required|exists:projects,id',
+        'milestone_id' => 'nullable|exists:milestones,id',
+        'sprint_id' => 'nullable|exists:sprints,id',
+        'title' => 'required|string|max:255',
+        'acceptance_criteria' => 'nullable|string',
+        'description' => 'nullable|string',
+        'status_id' => 'nullable|exists:task_statuses,id',
+        'priority' => 'required|in:low,medium,high',
+        'assignee_id' => 'nullable|exists:users,id',
+        'reporter_id' => 'nullable|exists:users,id',
+        'due_date' => 'nullable|date',
+        'estimated_time' => 'nullable|integer|min:0',
+    ]);
+
+    $task = Task::create($validated);
+
+    $files = $request->input('files', []);
+    $files = array_map('intval', $files);
+
+    if (!empty($files)) {
+        $task->files()->sync($files);
+    }
+
+    return response()->json($task, 201);
+}
+
+    // Update task
+    public function update(Request $request, Task $task)
+    {
 
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'milestone_id' => 'nullable|exists:milestones,id',
             'sprint_id' => 'nullable|exists:sprints,id',
             'title' => 'required|string|max:255',
+            'acceptance_criteria' => 'nullable|string',
             'description' => 'nullable|string',
             'status_id' => 'nullable|exists:task_statuses,id',
             'priority' => 'required|in:low,medium,high',
             'assignee_id' => 'nullable|exists:users,id',
             'reporter_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
-        ]);
-    
-        $task = Task::create($validated);
-
-        return response()->json($task, 201);
-    }
-
-    // Update task
-    public function update(Request $request, Task $task)
-    {
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'milestone_id' => 'nullable|exists:milestones,id',
-            'sprint_id' => 'nullable|exists:sprints,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status_id' => 'required|exists:task_statuses,id',
-            'priority' => 'required|in:low,medium,high',
-            'assignee_id' => 'nullable|exists:users,id',
-            'reporter_id' => 'nullable|exists:users,id',
-            'due_date' => 'nullable|date',
+            'estimated_time' => 'nullable|integer|min:0',
         ]);
 
         $task->update($validated);
+         $files = $request->input('files', []);
+    $files = array_map('intval', $files);
+
+    if (!empty($files)) {
+        $task->files()->sync($files);
+    }
 
         return response()->json($task);
     }
@@ -107,11 +133,10 @@ class TaskController extends Controller
         $task->sprint_id = $request->sprint_id;
     }
 
-    // Auto-change status: backlog → pending
-    $backlogStatusId = TaskStatus::where('name', 'backlog')->value('id');
-    $pendingStatusId = TaskStatus::where('name', 'pending')->value('id');
+ 
+    $pendingStatusId = TaskStatus::where('name', 'to do')->value('id');
 
-    if ($task->assignee_id && $task->sprint_id && $task->status_id == $backlogStatusId) {
+    if ($task->assignee_id && $task->sprint_id && $task->status_id == null) {
         $task->status_id = $pendingStatusId;
     }
 
@@ -124,19 +149,27 @@ class TaskController extends Controller
 }
 
     public function todos($userId)
-    {
-        $todos = Task::with('project', 'milestone', 'status')
-            ->where('assignee_id', $userId)
-            ->whereIn('status_id', [1]) // Assuming 1 = To Do, 2 = In Progress
-            ->orderBy('due_date', 'asc')
-            ->get();
+{
+    $companyId = auth()->user()->active_company_id;
 
-        return response()->json($todos);
-    }
+    $todos = Task::with(['project', 'milestone', 'status'])
+        ->where('assignee_id', $userId)
+        ->where(function ($q) {
+            $q->whereNull('status_id')
+              ->orWhereNotIn('status_id', [4]);
+        })
+        ->whereHas('project', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })
+        ->orderBy('due_date', 'asc')
+        ->get();
+
+    return response()->json($todos);
+}
 
     public function markAsCompleted(Task $task)
     {
-        $completedStatus = TaskStatus::where('name', 'Completed')->first();
+        $completedStatus = TaskStatus::where('name', 'completed')->first();
 
         if (!$completedStatus) {
             return response()->json(['message' => 'Completed status not found'], 500);
@@ -153,39 +186,71 @@ class TaskController extends Controller
     }
 
     
-    public function statusCounts($project = null)
+   public function statusCounts($project = null)
 {
+    // Backlog = sprint_id OR assignee_id null
+    $backlogQuery = Task::query()
+        ->where(function ($q) {
+            $q->whereNull('sprint_id')
+              ->orWhereNull('assignee_id')
+              ->orWhereNull('status_id');
+        });
+
+    if ($project) {
+        $backlogQuery->where('project_id', $project);
+    }
+
+    $backlogCount = $backlogQuery->count();
+
+    // Status counts (only tasks fully assigned)
     $query = Task::query()
         ->join('task_statuses', 'tasks.status_id', '=', 'task_statuses.id')
         ->select('task_statuses.name')
         ->selectRaw('COUNT(*) as count')
+        ->whereNotNull('tasks.sprint_id')
+        ->whereNotNull('tasks.assignee_id')
         ->groupBy('task_statuses.name');
 
     if ($project) {
         $query->where('tasks.project_id', $project);
     }
 
-    $counts = $query->pluck('count', 'name'); // ['Backlog' => 12, ...]
+    $counts = $query->pluck('count', 'name');
 
-    // Ensure all statuses are present even if count is 0
-    $allStatuses = ['backlog', 'pending', 'in progress', 'completed', 'Blocked'];
-    $statusCounts = [];
+    $allStatuses = ['to do', 'in progress', 'completed', ];
+
+    $statusCounts = [
+        'backlog' => $backlogCount
+    ];
+
     foreach ($allStatuses as $status) {
         $statusCounts[$status] = $counts[$status] ?? 0;
     }
-
+  
     return response()->json($statusCounts);
 }
 
   public function backlog($projectId = null)
 {
-    $query = Task::with(['milestone', 'assignee', 'status','sprint'])
+    $query = Task::with(['milestone', 'assignee', 'status','sprint','files'])
         ->whereNull('sprint_id')
-        ->orWhereNull('assignee_id');
+        ->whereNull('assignee_id');
 
     if ($projectId) {
         $query->where('project_id', $projectId);
     }
+
+    $backlogTasks = $query->orderBy('created_at', 'asc')->get();
+
+    return response()->json($backlogTasks);
+}
+  public function sprintBacklog($sprint=null)
+{
+    $query = Task::with(['milestone', 'assignee', 'status','sprint','files'])
+        ->whereNull('assignee_id');
+
+
+        $query->where('sprint_id', $sprint);
 
     $backlogTasks = $query->orderBy('created_at', 'asc')->get();
 

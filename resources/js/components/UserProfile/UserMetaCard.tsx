@@ -4,30 +4,67 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useSelector } from "react-redux";
+import api from "../../services/api";
 
-export default function UserMetaCard( { user }) {
+export default function UserMetaCard( { profile }) {
+ const { user, loading } = useSelector((state) => state.auth);
+  
   // const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
     // closeModal();
   };
+
+const handleAvatarChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const res = await api.post("/upload-avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  // update UI instantly
+  profile.avatar_url = res.data.avatar_url;
+};
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
-            <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              <img src="/images/user/owner.jpg" alt="user" />
-            </div>
+            <div className="relative w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800 group">
+
+  {/* Avatar Image */}
+  <img
+    src={profile?.avatar_url}
+    alt="user"
+    className="w-full h-full object-cover"
+  />
+  { user?.id === profile?.id &&
+  <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-xs opacity-0 group-hover:opacity-100 cursor-pointer transition">
+
+    Change
+
+    <input
+      type="file"
+      className="hidden"
+      accept="image/*"
+      onChange={handleAvatarChange}
+    />
+  </label>
+}
+</div>
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                {user?.name || ""}
+                {profile?.name || ""}
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
-                {user?.roles && user.roles.length > 0 && (
+                {profile?.roles && profile.roles.length > 0 && (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {user.roles.map((role) => role.name.charAt(0).toUpperCase() + role.name.slice(1)).join(", ")}
+                    {profile.roles.map((role) => role.name.charAt(0).toUpperCase() + role.name.slice(1)).join(", ")}
                   </p>
                 )}
           

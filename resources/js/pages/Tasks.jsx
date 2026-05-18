@@ -19,11 +19,11 @@ export default function Tasks() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    acceptance_criteria: '',
     milestone_id: '',
     status: '',
     priority: 'medium',
     sprint_id: '',
-    milestone_id: '',
     assignee_id: '',
     reporter_id: '',
     due_date: '',
@@ -124,7 +124,7 @@ const handleSubmit = async (e) => {
   });
 
   try {
-    const statusMap = { pending: 1, in_progress: 2, completed: 3 };
+    const statusMap = { to_do: 1, in_progress: 2, completed: 3 };
     const payload = {
       ...formData,
       project_id: projectId,
@@ -181,12 +181,12 @@ const handleSubmit = async (e) => {
         {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md ">
             <h4 className="text-lg font-semibold mb-4">{editingTask ? 'Edit Task' : 'Add Task'}</h4>
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3t max-h-[500px] overflow-y-auto" >
               {/* Title */}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Title</label>
+                <label className="block mb-1 font-medium text-gray-700">Title</label>
                 <input
                   type="text"
                   name="title"
@@ -196,9 +196,29 @@ const handleSubmit = async (e) => {
                   required
                 />
               </div>
+              {/* Description */}
+                 <div>
+                <label className="block mb-1 font-medium text-gray-700">Description</label>
+                <textarea
+                  name="description"
+                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">Acceptance Criteria</label>
+                <textarea
+                  name="acceptance_criteria"
+                  className="w-full h-30 border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
+                  value={formData.acceptance_criteria}
+                  onChange={handleChange}
+                />
+              </div>
+           
               {/* projects */}
               <div>
-    <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Project</label>
+    <label className="block mb-1 font-medium text-gray-700">Project</label>
     <select
       name="project_id"
       value={projectId}
@@ -216,7 +236,7 @@ const handleSubmit = async (e) => {
     </select>
               </div>
               <div>
-  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Sprint</label>
+  <label className="block mb-1 font-medium text-gray-700">Sprint</label>
   <select
     name="sprint_id"
     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
@@ -233,7 +253,7 @@ const handleSubmit = async (e) => {
   </select>
 </div>
 <div>
-  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Milestone</label>
+  <label className="block mb-1 font-medium text-gray-700">Milestone</label>
   <select
     name="milestone_id"
     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
@@ -251,7 +271,7 @@ const handleSubmit = async (e) => {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {/* Status */}
      <div>
-  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Status</label>
+  <label className="block mb-1 font-medium text-gray-700">Status</label>
   <select
     name="status"
     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
@@ -270,7 +290,7 @@ const handleSubmit = async (e) => {
 
               {/* Priority */}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Priority</label>
+                <label className="block mb-1 font-medium text-gray-700">Priority</label>
                 <select
                   name="priority"
                   className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
@@ -286,7 +306,7 @@ const handleSubmit = async (e) => {
 
               {/* Due Date */}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Due Date</label>
+                <label className="block mb-1 font-medium text-gray-700">Due Date</label>
                 <input
                   type="date"
                   name="due_date"
@@ -296,16 +316,7 @@ const handleSubmit = async (e) => {
                   onChange={handleChange}
                 />
               </div>
-  {/* Description */}
-              <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Description</label>
-                <textarea
-                  name="description"
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </div>
+  
               {/* Buttons */}
               <div className="flex justify-end gap-2 mt-4">
                 <button type="button" className="px-3 py-1 border rounded hover:bg-gray-100" onClick={() => setModalOpen(false)}>Cancel</button>

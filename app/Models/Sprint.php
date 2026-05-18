@@ -49,4 +49,9 @@ class Sprint extends Model
         $today = now()->toDateString();
         return $today >= $this->start_date && $today <= $this->end_date;
     }
+
+        public function users()
+    {
+        return $this->belongsToMany(User::class, 'sprint_users');
+    }
 }

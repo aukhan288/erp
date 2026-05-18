@@ -8,6 +8,7 @@ import Projects from "./pages/Projects";
 import Sprints from "./pages/Sprints";
 import Milestones from "./components/tables/MilestonesTable";
 import Profile from './pages/Profile';
+import Documents from './pages/Documents';
 
 import Tasks from "./pages/Tasks";
 import Todos from "./pages/Todos";
@@ -50,6 +51,7 @@ function AppRoutes() {
           <Route path="sprints" element={<Sprints />} />
           <Route path="todos" element={<Todos />} />
           <Route path="profile/:id" element={<Profile />} />
+          <Route path="documents" element={<Documents />} />
           <Route path="/projects/:id" element={<ProjectDetails />} />
           <Route path="" element={<Navigate to="dashboard" replace />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />

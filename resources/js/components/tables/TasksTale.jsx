@@ -12,7 +12,8 @@ import { TrashBinIcon, PencilIcon } from '../../icons';
 import moment from 'moment';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
- import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import TableLoader from '../common/TableLoader';
   
 
 export default function TasksTable( { refreshKey, setRefreshKey} ) {
@@ -70,8 +71,8 @@ export default function TasksTable( { refreshKey, setRefreshKey} ) {
       >
         {assignee ? (
           <>
-            <img src={assignee.avatar_url} alt={assignee.name} className="w-6 h-6 rounded-full" />
-            <span>{assignee?.id==user?.id ? 'You' : assignee.name}</span>
+            <img src={assignee.avatar_url} alt={assignee.firstname + " " + assignee.lastname} className="w-6 h-6 rounded-full" />
+            <span>{assignee?.id==user?.id ? 'You' : assignee.firstname + " " + assignee.lastname}</span>
           </>
         ) : (
           <span className="text-gray-400">-- Select --</span>
@@ -143,22 +144,24 @@ useEffect(() => {
     fetchData();
   }, [pageIndex, pageSize, refreshKey]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    pageCount,
-    state: { pagination: { pageIndex, pageSize } },
-    onPaginationChange: (updater) => {
-      const newState =
-        typeof updater === 'function'
-          ? updater({ pageIndex, pageSize })
-          : updater;
-      setPageIndex(newState.pageIndex);
-      setPageSize(newState.pageSize);
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+const table = useReactTable({
+  data,
+  columns,
+  pageCount,
+  manualPagination: true,   // ⭐ IMPORTANT
+  autoResetPageIndex: false,
+  state: { pagination: { pageIndex, pageSize } },
+  onPaginationChange: (updater) => {
+    const newState =
+      typeof updater === 'function'
+        ? updater({ pageIndex, pageSize })
+        : updater;
+
+    setPageIndex(newState.pageIndex);
+    setPageSize(newState.pageSize);
+  },
+  getCoreRowModel: getCoreRowModel(),
+});
 
 
 
@@ -192,9 +195,9 @@ useEffect(() => {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      {loading && <p className="p-4 text-gray-500">Loading tasks...</p>}
-
-      <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
+      {loading?  <TableLoader />
+        :
+      <><table className="min-w-full border border-gray-200 divide-y divide-gray-200">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -244,10 +247,10 @@ useEffect(() => {
         totalRecords={totalRecords}
         pageSize={pageSize}
         onPageChange={(page) => setPageIndex(page - 1)}
-      />
+      /></>}
       {assigneeModalOpen && selectedTask && (
   <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm">
       <h4 className="text-lg font-semibold mb-4">Assign Task</h4>
 
       <select

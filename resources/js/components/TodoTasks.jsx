@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import moment from 'moment';
-
+import Swal from 'sweetalert2';
+import { useSelector } from 'react-redux';
 export default function TodoTasks({ userId }) {
+    const user = useSelector((state) => state.auth.user);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -28,14 +30,45 @@ export default function TodoTasks({ userId }) {
     fetchTodos();
   }, []);
 
-  const markAsDone = async (id) => {
-    try {
-      await api.post(`/task-completed/${id}`);
-        setTodos((prev) => prev.filter((todo) => todo.id !== id));
-    } catch (err) {
-      console.error('Failed to mark todo as done', err);
-    }
-  };
+const markAsDone = async (todo) => {
+  const result = await Swal.fire({
+    title: "Mark as completed?",
+    text: todo.title || "This task will be marked as done.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Yes, complete it!",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#0d9488",
+    cancelButtonColor: "#dc2626",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await api.post(`/task-completed/${todo.id}`);
+
+    setTodos((prev) =>
+      prev.filter((t) => t.id !== todo.id)
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Completed!",
+      text: "Task marked as done.",
+      confirmButtonColor: "#0d9488",
+    });
+
+  } catch (err) {
+    console.error("Failed to mark todo as done", err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Failed to mark task as done.",
+      confirmButtonColor: "#dc2626",
+    });
+  }
+};
 
 
   return (
@@ -69,11 +102,23 @@ export default function TodoTasks({ userId }) {
           Overdue by {moment().diff(moment(todo.due_date), 'days')} days
         </p>
       )}
+      <p>
+  Estimation:{" "}
+  {todo?.estimated_time ? (
+    <>
+      {Math.floor(todo.estimated_time / 60) > 0 &&
+        `${Math.floor(todo.estimated_time / 60)} hr `}
+      {todo.estimated_time % 60 > 0 &&
+        `${todo.estimated_time % 60} min`}
+    </>
+  ) : null}
+</p>
     </div>
 
     {/* Push button to bottom */}
     <button
-      onClick={() => markAsDone(todo.id)}
+      onClick={() => markAsDone(todo)}
+      disabled={ todo?.assignee_id !== user?.id }
       className="mt-auto w-full text-teal-700 underline py-1 text-right transition"
     >
       Mark as Done

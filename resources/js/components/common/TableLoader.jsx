@@ -1,17 +1,15 @@
-export default function TableLoader({ rows = 5, columns = 4 }) {
+export default function TableLoader({ rows = 10 }) {
   return (
-    <table>
-    <tbody>
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <tr key={rowIndex} className="animate-pulse">
-          {Array.from({ length: columns }).map((_, colIndex) => (
-            <td key={colIndex} className="px-4 py-2">
-              <div className="h-4 bg-gray-700 rounded w-full"></div>
+    <table className="w-full">
+      <tbody className="divide-y divide-gray-200">
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <tr key={rowIndex}>
+            <td className="px-2 py-1">
+              <div className="h-10 bg-gray-300 rounded animate-pulse w-full"></div>
             </td>
-          ))}
-        </tr>
-      ))}
-    </tbody>
+          </tr>
+        ))}
+      </tbody>
     </table>
   );
 }

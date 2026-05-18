@@ -11,42 +11,59 @@ class UserController extends Controller
 {
     public function createUser(Request $request)
     {
-        // Validate the incoming request data
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'firstname' => 'required|string|max:255',
+            'lastname' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'mobile' => 'required|string',
+            'cnic' => 'required|string',
+            'working_days' => 'required|array',
+            'address' => 'required|string',
         ]);
 
-        // Create a new user using the validated data
         $user = User::create([
-            'name' => $validatedData['name'],
+            'firstname' => $validatedData['firstname'],
+            'lastname' => $validatedData['lastname'] ?? null,
             'email' => $validatedData['email'],
+            'mobile' => $validatedData['mobile'],
+            'cnic' => $validatedData['cnic'],
+            'working_days' => $validatedData['working_days'],
+            'address_line' => $validatedData['address'],
             'password' => Hash::make('Admin12#'),
         ]);
 
-        // Return a response indicating success
-        return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user
+        ], 201);
     }
 
-   public function users(Request $request)
+public function users(Request $request)
 {
     $perPage = $request->input('per_page', 10);
 
+
+
     $users = User::query()
-        ->with('roles', 'permissions')
+        ->with([
+            'roles:id,name',
+            'permissions:id,name',
+            'companies:id,name',
+            'activeCompany:id,name'
+        ])
         ->when($request->search, function ($q) use ($request) {
             $q->where(function ($query) use ($request) {
-                $query->where('name', 'like', "%{$request->search}%")
+                $query->where('firstname', 'like', "%{$request->search}%")
+                      ->orWhere('lastname', 'like', "%{$request->search}%")
                       ->orWhere('email', 'like', "%{$request->search}%");
             });
         })
         ->withCount([
             'tasks as assigned_tasks' => function ($q) {
-                $q->whereNotIn('status_id', [2, 3]); // exclude rejected
-                // exclude rejected
+                $q->whereNotIn('status_id', [2, 3]);
             },
             'tasks as completed_tasks' => function ($q) {
-                $q->whereIn('status_id', [4]); // completed
+                $q->whereIn('status_id', [4]);
             }
         ])
         ->latest()
@@ -57,21 +74,25 @@ class UserController extends Controller
 
    public function show($id)
 {
-    $user = User::with('roles.permissions', 'permissions')->findOrFail($id);
+    $user = User::with([
+        'permissions',
+        'companies:id,name',
+        'activeCompany:id,name',
+        'roles.permissions'
+    ])->findOrFail($id);
 
-    // Merge direct permissions + role permissions
-    $rolePermissions = $user->roles->flatMap(function ($role) {
-        return $role->permissions;
-    });
+    $user->setRelation(
+        'roles',
+        $user->roles->where('pivot.company_id', $user->active_company_id)
+    );
 
-   $allPermissions = Permission::all()->unique('name')->values();
+    $allPermissions = Permission::all()->unique('name')->values();
 
     return response()->json([
         'user' => $user,
         'permissions' => $allPermissions
     ]);
 }
-
     public function togglePermission(Request $request)
     {
         $request->validate([
@@ -92,4 +113,28 @@ class UserController extends Controller
             return response()->json(['message' => 'Permission granted successfully']);
         }
     }
+
+    public function uploadAvatar(Request $request)
+{
+    $request->validate([
+        'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    $user = auth()->user();
+
+    if ($request->hasFile('avatar')) {
+
+        $file = $request->file('avatar');
+
+        $path = $file->store('avatars', 'public');
+
+        $user->avatar =   $path;
+        $user->save();
+    }
+
+    return response()->json([
+        'message' => 'Avatar uploaded successfully',
+        'avatar_url' => $user->avatar_url
+    ]);
+}
 }

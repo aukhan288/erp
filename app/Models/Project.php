@@ -17,6 +17,7 @@ class Project extends Model
         'status',
         'customer_id',
         'created_by',
+        'company_id',
     ];
 
      // Project belongs to a customer (optional)

@@ -12,8 +12,11 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import Pagination from "../common/Pagination";
 import moment from "moment";
+import TableLoader from '../common/TableLoader';
+import { useSelector } from 'react-redux';
 
 export default function MilestonesTable() {
+    const user = useSelector((state) => state.auth.user);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -107,12 +110,14 @@ export default function MilestonesTable() {
           );
         },
       }),
+      
       columnHelper.display({
         id: "actions",
         header: "Actions",
         cell: (info) => {
           const milestone = info.row.original; 
-          return (
+          return (<>
+                   {user?.roles?.some(role => role.name === "admin") && (   
                  <div className="flex gap-2">
                               <button
                                 className="text-blue-600 hover:underline"
@@ -127,7 +132,8 @@ export default function MilestonesTable() {
                                 <TrashBinIcon />
                               </button>
                             </div>
-          );
+                   )}
+          </>);
         },
       }),
     ],
@@ -170,6 +176,8 @@ export default function MilestonesTable() {
     columns,
     pageCount,
     state: { pagination: { pageIndex, pageSize } },
+      manualPagination: true,   // ⭐ IMPORTANT
+  autoResetPageIndex: false,
     onPaginationChange: (updater) => {
       const newState =
         typeof updater === "function"
@@ -293,18 +301,19 @@ const handleDelete = async (id) => {
     <div>
            <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-700">Milestones</h3>
+        {user?.roles?.some(role => role.name === "admin") && (
         <button
           className="bg-teal-700 text-white px-3 py-1 rounded hover:bg-teal-800"
           onClick={() => openModal()}
         >
           + Milestones
         </button>
+        )}
       </div>
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
 
-      {loading && (
-        <p className="p-4 text-gray-500">Loading milestones...</p>
-      )}
+      {loading? <TableLoader />
+        : <>
 
       <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
         <thead className="bg-gray-100">
@@ -349,17 +358,18 @@ const handleDelete = async (id) => {
         pageSize={pageSize}
         onPageChange={(page) => setPageIndex(page - 1)}
       />
+      </>}
     </div>
      {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+  <div className="bg-white rounded-lg p-6 w-full max-w-md">
     <h4 className="text-lg font-semibold mb-4">
       {editingMilestone ? 'Edit Milestone' : 'Add Milestone'}
     </h4>
-    <form onSubmit={handleSubmit} className="space-y-3">
+     <form onSubmit={handleSubmit} className="space-y-3 max-h-[500px] overflow-y-auto">
        <div>
-    <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Project</label>
+    <label className="block mb-1 font-medium text-gray-700">Project</label>
     <select
       name="project_id"
       value={formData.project_id}
@@ -375,7 +385,7 @@ const handleDelete = async (id) => {
   </div>
       {/* Milestone Name */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="name">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="name">
           Milestone Name
         </label>
         <input
@@ -391,13 +401,13 @@ const handleDelete = async (id) => {
 
       {/* Description */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="description">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="description">
           Description (optional)
         </label>
         <textarea
           id="description"
           name="description"
-          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
+          className="w-full h-30 border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500"
           value={formData.description}
           onChange={handleChange}
         />
@@ -405,7 +415,7 @@ const handleDelete = async (id) => {
 
       {/* Due Date */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="due_date">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="due_date">
           Due Date
         </label>
         <input
@@ -420,7 +430,7 @@ const handleDelete = async (id) => {
 
       {/* Status */}
       <div>
-        <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200" htmlFor="status">
+        <label className="block mb-1 font-medium text-gray-700" htmlFor="status">
           Status
         </label>
         <select

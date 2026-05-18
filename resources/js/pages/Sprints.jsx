@@ -125,11 +125,11 @@ export default function Sprints() {
         {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h4 className="text-lg font-semibold mb-4">{editingTask ? 'Edit Task' : 'Add Task'}</h4>
-            <form onSubmit={handleSubmit} className="space-y-3">
+             <form onSubmit={handleSubmit} className="space-y-3 max-h-[500px] overflow-y-auto">
                 <div>
-    <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Project</label>
+    <label className="block mb-1 font-medium text-gray-700">Project</label>
     <select
       name="project_id"
       value={projectId}
@@ -148,23 +148,23 @@ export default function Sprints() {
   </div>
 
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Sprint Name</label>
+                <label className="block mb-1 font-medium text-gray-700">Sprint Name</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required
                   className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" />
               </div>
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Goal</label>
+                <label className="block mb-1 font-medium text-gray-700">Goal</label>
                 <textarea name="goal" value={formData.goal} onChange={handleChange} 
                   className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" />
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Start Date</label>
+                  <label className="block mb-1 font-medium text-gray-700">Start Date</label>
                   <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} 
                     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" required />
                 </div>
                 <div className="flex-1">
-                  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">End Date</label>
+                  <label className="block mb-1 font-medium text-gray-700">End Date</label>
                   <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} 
                     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 border-gray-300 focus:ring-teal-500" required />
                 </div>

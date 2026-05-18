@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router";
+import BrandHeader from "../components/BrandHeader"
+import { useSelector } from "react-redux";
+
 
 // Assume these icons are imported from an icon library
 import {
@@ -15,6 +18,7 @@ import {
   TableIcon,
   UserCircleIcon,
   ProjectsIcon,
+  DocsIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -61,6 +65,13 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Users",
     path: "/users",
+    roles: ["admin"],
+  },
+  {
+    icon: <DocsIcon />,
+    name: "documents",
+    path: "/documents",
+    roles: ["admin"],
   },
 
   // {
@@ -77,6 +88,18 @@ const othersItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
+  const { user } = useSelector((state) => state.auth);
+const roles = useMemo(() => {
+  return user?.roles?.map(r => r.name) ?? [];
+}, [user]);
+
+const filteredNavItems = useMemo(() => {
+  return navItems.filter((item) => {
+    if (!item.roles) return true;
+    if (!roles.length) return false;
+    return item.roles.some((role) => roles.includes(role));
+  });
+}, [roles]);
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
@@ -95,29 +118,31 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
-  useEffect(() => {
-    let submenuMatched = false;
-    ["main"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" ,
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
-        }
-      });
-    });
+useEffect(() => {
+  let submenuMatched = false;
 
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
-  }, [location, isActive]);
+  ["main"].forEach((menuType) => {
+    const items = menuType === "main" ? filteredNavItems : othersItems;
+
+    items.forEach((nav, index) => {
+      if (nav.subItems) {
+        nav.subItems.forEach((subItem) => {
+          if (isActive(subItem.path)) {
+            setOpenSubmenu({
+              type: menuType as "main",
+              index,
+            });
+            submenuMatched = true;
+          }
+        });
+      }
+    });
+  });
+
+  if (!submenuMatched) {
+    setOpenSubmenu(null);
+  }
+}, [location, isActive, filteredNavItems]);
 
   useEffect(() => {
     if (openSubmenu !== null) {
@@ -225,7 +250,7 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
-                      className={`menu-dropdown-item text-teal-700 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300 ${
+                      className={`menu-dropdown-item text-teal-700 hover:text-teal-900 ${
                         isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
@@ -269,7 +294,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"
@@ -290,20 +315,8 @@ const AppSidebar: React.FC = () => {
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+              <BrandHeader />
+       
             </>
           ) : (
             <img
@@ -332,7 +345,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+             {renderMenuItems(filteredNavItems, "main")}
             </div>
             <div className="">
               <h2

@@ -1,27 +1,28 @@
 import React, { useState } from "react";
 import api from "../../services/api"; // adjust the path
 
-export default function UserPermissionsCard({ user, permissions, setUser }) {
+export default function UserPermissionsCard({ profile, permissions, setProfile, companies }) {
+
   const [loadingIds, setLoadingIds] = useState<number[]>([]); // track loading per permission
 
   const handlePermissionToggle = async (permissionId: number) => {
-    if (!user) return;
+    if (!profile) return;
 
-    const isAlreadyAssigned = user.permissions?.some((p) => p.id === permissionId);
+    const isAlreadyAssigned = profile.permissions?.some((p) => p.id === permissionId);
 
     // Optimistically update UI
     const updatedPermissions = isAlreadyAssigned
-      ? user.permissions.filter((p) => p.id !== permissionId)
-      : [...(user.permissions || []), permissions.find((p) => p.id === permissionId)!];
+      ? profile.permissions.filter((p) => p.id !== permissionId)
+      : [...(profile.permissions || []), permissions.find((p) => p.id === permissionId)!];
 
-    setUser({ ...user, permissions: updatedPermissions });
+    setUser({ ...profile, permissions: updatedPermissions });
 
     // Mark this permission as loading
     setLoadingIds((prev) => [...prev, permissionId]);
 
     try {
       await api.post("/toggle-permission", {
-        user_id: user.id,
+        user_id: profile.id,
         permission_id: permissionId,
       });
       // Optionally: update with server response to stay in sync
@@ -32,7 +33,7 @@ export default function UserPermissionsCard({ user, permissions, setUser }) {
       alert("Failed to update permission");
 
       // Revert UI if API fails
-      setUser(user);
+      setProfile(profile);
     } finally {
       setLoadingIds((prev) => prev.filter((id) => id !== permissionId));
     }
@@ -40,6 +41,7 @@ export default function UserPermissionsCard({ user, permissions, setUser }) {
 
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+     
       <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
         User Permissions
       </h4>
@@ -47,7 +49,7 @@ export default function UserPermissionsCard({ user, permissions, setUser }) {
       {permissions && permissions.length > 0 ? (
         <ul className="space-y-2">
           {permissions.map((permission) => {
-            const isChecked = user?.permissions?.some((p) => p?.id === permission?.id) || false;
+            const isChecked = profile?.permissions?.some((p) => p?.id === permission?.id) || false;
             const isLoading = loadingIds.includes(permission.id);
 
             return (

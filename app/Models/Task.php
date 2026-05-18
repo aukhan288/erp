@@ -14,6 +14,7 @@ class Task extends Model
         'milestone_id',
         'sprint_id',
         'title',
+        'acceptance_criteria',
         'description',
         'status_id',
         'priority',
@@ -21,6 +22,7 @@ class Task extends Model
         'reporter_id',
         'due_date',
         'completed_at',
+        'estimated_time'
     ];
 
     // Relationships
@@ -52,5 +54,10 @@ class Task extends Model
     public function sprint()
     {
         return $this->belongsTo(Sprint::class);
+    }
+
+    public function files()
+    {
+        return $this->belongsToMany(File::class, 'task_files');
     }
 }
